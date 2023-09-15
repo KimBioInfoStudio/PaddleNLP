@@ -116,7 +116,7 @@ def parse_args():
         "--device",
         type=str,
         default="gpu",
-        choices=["cpu", "gpu", "xpu", "npu"],
+        choices=["cpu", "gpu", "xpu", "npu", "intel_gpu"],
         help="Device for selecting for the training.",
     )
     parser.add_argument("--use_amp", type=strtobool, default=False, help="Enable mixed precision training.")

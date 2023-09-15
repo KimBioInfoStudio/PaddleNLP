@@ -233,7 +233,7 @@ python -m paddle.distributed.launch --gpus "0" run_glue_trainer.py \
 - `logging_steps` 表示日志打印间隔。
 - `save_steps` 表示模型保存及评估间隔。
 - `output_dir` 表示模型保存路径。
-- `device` 表示训练使用的设备, 'gpu'表示使用GPU, 'xpu'表示使用百度昆仑卡, 'cpu'表示使用CPU, 'npu'表示使用华为昇腾卡。
+- `device` 表示训练使用的设备, 'gpu'表示使用GPU, 'xpu'表示使用百度昆仑卡, 'cpu'表示使用CPU, 'npu'表示使用华为昇腾卡,'intel_gpu'表示使用 英特尔数据中心Max系列显卡 。
 - `fp16` 是否使用 fp16 混合精度训练而不是 fp32 训练。(`bool`, 可选, 默认为 `False`)
 - `do_train` 是否进行训练任务。(`bool`, 可选, 默认为 `False`)
 - `do_eval` 是否进行评估任务。同上。(`bool`, 可选, 默认为 `False`)

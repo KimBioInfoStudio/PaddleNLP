@@ -32,7 +32,7 @@ def device_guard(device="cpu", dev_id=0):
     origin_device = paddle.device.get_device()
     if device == "cpu":
         paddle.set_device(device)
-    elif device in ["gpu", "xpu", "npu"]:
+    elif device in ["gpu", "xpu", "npu", "intel_gpu"]:
         paddle.set_device("{}:{}".format(device, dev_id))
     try:
         yield

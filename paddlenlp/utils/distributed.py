@@ -226,6 +226,8 @@ def dist_gather(tensor, gather_list=None, dst=0, group=None, async_op=False):
     backend = "NCCL"
     if paddle.get_device().split(":")[0] == "npu":
         backend = "HCCL"
+    if paddle.get_device().split(":")[0] == "intel_gpu":
+        backend = "XCCL"
     with _with_batch_p2p_guard(backend):
         if rank == dst:
             for src in range(nranks):
