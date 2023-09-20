@@ -30,7 +30,10 @@ from paddlenlp.transformers.model_outputs import (
     BaseModelOutputWithPastAndCrossAttentions,
     CausalLMOutputWithPast,
 )
-from paddlenlp.transformers.model_utils import register_base_model
+from paddlenlp.transformers.model_utils import (
+    dy2st_nocheck_guard_context,
+    register_base_model,
+)
 
 __all__ = ["ChatGLMForCausalLMInferenceModel"]
 
@@ -294,18 +297,19 @@ class ChatGLMStackDyBatch(nn.Layer):
         new_cache = [None]
         hidden_states = self.input_layernorm(hidden_states)
 
-        hidden_states, new_cache = self.transformer_block(
-            input_ids,
-            hidden_states,
-            cum_offsets=cum_offsets,
-            padding_offset=padding_offset,
-            attn_mask=paddle.cast(attention_mask, dtype=hidden_states.dtype),
-            caches=cache_kvs,
-            rotary_embs=paddle.cast(rotary_embeds, "float32"),
-            rotary_emb_dims=2 if self.config.position_encoding_2d else 1,
-            seq_lens=seq_lens,
-            time_step=time_step,
-        )
+        with dy2st_nocheck_guard_context():
+            hidden_states, new_cache = self.transformer_block(
+                input_ids,
+                hidden_states,
+                cum_offsets=cum_offsets,
+                padding_offset=padding_offset,
+                attn_mask=paddle.cast(attention_mask, dtype=hidden_states.dtype),
+                caches=cache_kvs,
+                rotary_embs=paddle.cast(rotary_embeds, "float32"),
+                rotary_emb_dims=2 if self.config.position_encoding_2d else 1,
+                seq_lens=seq_lens,
+                time_step=time_step,
+            )
         return (hidden_states, new_cache)
 
     @paddle.no_grad()
@@ -328,7 +332,7 @@ class ChatGLMStackDyBatch(nn.Layer):
                 continue
             elif k.startswith("lm_head.weight"):
                 continue
-            elif k.endswith("rotary_emb.inv_freq"):
+            elif k.endswith("rotary_embeddings.inv_freq") or k.endswith("rotary_emb.inv_freq"):
                 continue
             idx = int(k.split(".")[2])
             if k.endswith("input_layernorm.weight"):
@@ -470,6 +474,14 @@ class ChatGLMForCausalLMInferenceModel(GenerationInferenceModel, ChatGLMPretrain
         self.model = ChatGLMModelDyBatch(config)
 
         self.lm_head = self.model.get_input_embeddings()
+
+    @classmethod
+    def from_pretrained(
+        cls, pretrained_model_name_or_path, from_hf_hub: bool = False, subfolder: str | None = None, *args, **kwargs
+    ):
+        # TODO: Support safetensors loading.
+        kwargs["use_safetensors"] = False
+        return super().from_pretrained(pretrained_model_name_or_path, from_hf_hub, subfolder, *args, **kwargs)
 
     @classmethod
     def get_cache_kvs_shape(
